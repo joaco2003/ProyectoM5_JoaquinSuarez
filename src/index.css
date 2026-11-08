@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/* MODO CLARO: foto de la cancha con una capa blanca semitransparente encima para que se lea el texto */
+body {
+  background-image: linear-gradient(rgba(255,255,255,.78), rgba(255,255,255,.78)), url('/public/cancha.jpg');
+  background-size: cover;        /* La foto cubre toda la pantalla */
+  background-position: center;   /* Centrada */
+  background-attachment: fixed;  /* No se mueve al hacer scroll */
+  background-color: #e5e7eb;     /* Color de respaldo si la foto no carga */
+  color: #111827;                /* Texto oscuro */
+}
+
+/* MODO OSCURO: misma foto, pero con una capa negra encima */
+.dark body {
+background-image: linear-gradient(rgba(0,0,0,.7), rgba(0,0,0,.7)), url('/public/cancha.jpg');
+background-color: #111827;
+  color: #f3f4f6;                /* Texto claro */
+}
+
+/* En modo oscuro, las tarjetas blancas pasan a gris oscuro */
+.dark input, .dark select { background-color: #111827; color: #f3f4f6; border-color: #4b5563; }
+
+
+
+
+/* ===== Barra superior ===== */
+.navbar {
+  background: #ffffff;                       /* Fondo blanco */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .15);  /* Sombra suave abajo */
+  padding: 1rem;
+  display: flex;                             /* Elementos en fila */
+  justify-content: space-between;            /* Logo a la izquierda, acciones a la derecha */
+  align-items: center;                       /* Alineados verticalmente */
+}
+.navbar-logo { font-weight: 700; font-size: 1.125rem; }
+.navbar-actions { display: flex; align-items: center; gap: 1.25rem; } /* Separación entre iconos */
+
+/* ===== Iconos (SVG) ===== */
+.icon {
+  width: 26px; height: 26px;                 /* Tamaño */
+  fill: none;                                /* Sin relleno: solo el contorno */
+  stroke: currentColor;                      /* El trazo usa el color del texto (cambia con el tema) */
+  stroke-width: 1.8;                         /* Grosor de la línea */
+  stroke-linecap: round;                     /* Puntas redondeadas */
+  stroke-linejoin: round;                    /* Esquinas redondeadas */
+}
+.icon-btn { background: none; border: 0; cursor: pointer; display: flex; align-items: center; color: inherit; }
+
+/* ===== Menú de la cuenta ===== */
+.account { position: relative; }             /* Para posicionar el menú respecto a este bloque */
+.account-menu {
+  position: absolute; right: 0; top: 100%;   /* Justo debajo del icono, alineado a la derecha */
+  margin-top: .5rem;
+  width: 12rem;
+  background: #ffffff;
+  border-radius: .5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+  padding: .5rem;
+  display: flex; flex-direction: column;     /* Opciones una debajo de otra */
+  z-index: 10;                               /* Por encima del resto de la página */
+}
+.account-email {
+  padding: .25rem .5rem;
+  font-size: .75rem;
+  color: #6b7280;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; /* Si el email es largo, lo corta con "..." */
+}
+.account-link {
+  padding: .25rem .5rem;
+  text-align: left;
+  background: none; border: 0; cursor: pointer; color: inherit;
+}
+.account-link:hover { opacity: .7; }         /* Se atenúa al pasar el mouse */
+
+/* ===== Carrito con numerito ===== */
+.cart-link { position: relative; display: flex; } /* "relative" para ubicar el circulito encima */
+.cart-badge {
+  position: absolute; top: -8px; right: -8px;      /* Pegado arriba a la derecha del icono */
+  width: 20px; height: 20px;
+  background: #000; color: #fff;                   /* Círculo negro, número blanco */
+  font-size: .75rem; font-weight: 700;
+  border-radius: 9999px;                           /* Totalmente redondo */
+  border: 1px solid #fff;
+  display: flex; align-items: center; justify-content: center; /* Número centrado */
+}
+
+/* ===== Modo oscuro (se activa cuando <html> tiene la clase "dark") ===== */
+.dark .navbar,
+.dark .account-menu { background: #1f2937; color: #f3f4f6; } /* Fondo gris oscuro, texto claro */
+.dark .account-email { color: #9ca3af; }
+.dark .cart-badge { border-color: #1f2937; }                 /* El borde del circulito combina con la barra */
+
+
+
+
+/* ===== Clases reutilizables ===== */
+.card {
+  background: #ffffff; border-radius: .5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .15); padding: 1rem;
+}
+.field { border: 1px solid #d1d5db; border-radius: .375rem; padding: .5rem; background: #ffffff; color: inherit; }
+.primary-btn {
+  background: #16a34a; color: #fff;          /* Botón verde */
+  border: 0; border-radius: .375rem; padding: .5rem 1rem; cursor: pointer;
+}
+.primary-btn:disabled { opacity: .5; cursor: not-allowed; }
+.primary-btn.full { width: 100%; margin-top: .5rem; } /* Ocupa todo el ancho */
+.link-btn { background: none; border: 0; text-decoration: underline; font-size: .875rem; cursor: pointer; color: inherit; }
+.error-msg { color: #dc2626; font-size: .875rem; }
+.muted { color: #6b7280; }
+.small { font-size: .875rem; }
+.bold { font-weight: 700; }
+.title { font-size: 1.25rem; font-weight: 700; margin-bottom: .75rem; }
+.stack { display: flex; flex-direction: column; gap: .75rem; }  /* Elementos uno debajo del otro */
+.stack-lg { gap: 1.5rem; }
+
+/* Fila con separador (carrito, admin) */
+.row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: .5rem; flex-wrap: wrap; padding: .5rem 0; border-bottom: 1px solid #e5e7eb;
+}
+.row-info { display: flex; align-items: center; gap: .5rem; }
+
+/* ===== Catálogo ===== */
+.filters { display: flex; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap; }
+.filters-search { flex: 1; min-width: 12rem; }
+.chips { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.chip { padding: .25rem .75rem; border-radius: 9999px; border: 1px solid #d1d5db; background: #fff; color: #1f2937; cursor: pointer; }
+.chip-active { background: #16a34a; color: #fff; border-color: #16a34a; } /* Categoría elegida */
+
+
+
+/* ===== Catálogo: cards grandes ===== */
+.product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }     /* 2 columnas en celular */
+@media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }  /* 3 en tablet */
+@media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } } /* 4 en pantalla grande */
+
+.product-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; } /* Sin margen interno: la imagen llega a los bordes */
+.product-link { display: block; color: inherit; text-decoration: none; }
+
+.img-box {
+  aspect-ratio: 1 / 1;                 /* Recuadro cuadrado, como en tu imagen de ejemplo */
+  background: #f5f5f5;                 /* Gris clarito de fondo */
+  display: flex; align-items: center; justify-content: center;
+}
+.product-img {
+  width: 100%; height: 100%;
+  object-fit: contain;                 /* La foto se ve ENTERA, sin recortar */
+  padding: .75rem;
+  mix-blend-mode: multiply;            /* El blanco de la foto se mezcla con el gris y desaparece */
+}
+.product-emoji { font-size: 5rem; }
+
+.product-info { padding: .75rem 1rem .5rem; text-align: left; }
+.product-name { font-weight: 600; font-size: .95rem; }
+.product-price { color: #dc2626; font-weight: 700; font-size: 1.1rem; margin-top: .25rem; } /* Precio en rojo */
+.product-add { margin: auto 1rem 1rem; }  /* Botón al fondo de la card, con margen */
+
+
+/* ===== Carrito ===== */
+.qty { display: flex; align-items: center; gap: .5rem; }
+.total { text-align: right; font-weight: 700; margin-top: 1rem; }
+
+/* ===== Admin ===== */
+.admin-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+@media (min-width: 768px) { .admin-form { grid-template-columns: repeat(3, 1fr); } }
+.thumb { width: 2.5rem; height: 2.5rem; object-fit: cover; border-radius: .25rem; }
+.thumb-emoji { font-size: 1.5rem; }
+
+/* ===== Login ===== */
+.login-card {
+  background: #ffffff; border-radius: .5rem; box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
+  padding: 1.5rem; max-width: 24rem; margin: 0 auto;
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.login-title { font-size: 1.25rem; font-weight: 700; }
+.login-divider { display: flex; align-items: center; gap: .75rem; color: #6b7280; font-size: .875rem; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #d1d5db; } /* Líneas a los lados de la "o" */
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  background: #ffffff; color: #1f2937; border: 1px solid #d1d5db; border-radius: .375rem;
+  padding: .5rem; cursor: pointer;
+}
+.google-btn:hover { background: #f3f4f6; }
+.google-icon { width: 20px; height: 20px; }   /* Tamaño del logo */
+.g-red { fill: #ea4335; }
+.g-blue { fill: #4285f4; }
+.g-yellow { fill: #fbbc05; }
+.g-green { fill: #34a853; }
+
+/* ===== Modo oscuro ===== */
+.dark .card, .dark .login-card { background: #1f2937; color: #f3f4f6; }
+.dark .field { background: #111827; border-color: #4b5563; color: #f3f4f6; }
+.dark .muted { color: #d1d5db; }
+.dark .row { border-bottom-color: #374151; }
+.dark .chip { background: #1f2937; color: #f3f4f6; border-color: #4b5563; }
+.dark .chip-active { background: #16a34a; border-color: #16a34a; }
+.dark .login-divider { color: #9ca3af; }
+.dark .login-divider::before, .dark .login-divider::after { background: #4b5563; }
+
+/* Separador "─── o ───" entre el login normal y Google */
+.login-divider { display: flex; align-items: center; gap: .75rem; color: #6b7280; font-size: .875rem; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #d1d5db; } /* Las dos líneas */
+
+
+/* La app ocupa toda la pantalla y el footer queda siempre al final */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.page { flex: 1; width: 100%; max-width: 80rem; margin: 0 auto; padding: 1rem 1rem 2rem; } /* flex:1 empuja el footer abajo */
+/* Botón de Google */
+
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: .5rem; /* Logo + texto centrados */
+  background: #ffffff; color: #1f2937;
+  border: 1px solid #d1d5db; border-radius: .375rem;
+  padding: .5rem; cursor: pointer;
+}
+.google-btn:hover { background: #f3f4f6; }
+/* ===== Detalle de producto ===== */
+/* Detalle: sin overflow hidden, para que nunca recorte el contenido */
+.detail { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 0; align-items: start; }
+@media (min-width: 768px) { .detail { grid-template-columns: 1fr 1fr; } }
+.detail .img-box { border-radius: .5rem; }
+
+/* ===== Formulario admin ===== */
+.field-wide { grid-column: 1 / -1; }            /* El campo ocupa todo el ancho de la grilla */
+textarea.field { resize: vertical; font-family: inherit; }
+
+/* ===== Navbar con links ===== */
+.navbar { flex-wrap: wrap; row-gap: .5rem; }              /* En celular, los links bajan a otra fila */
+.nav-links { display: flex; gap: 1.5rem; order: 3; width: 100%; justify-content: center; } /* Celular: fila propia */
+@media (min-width: 768px) {
+  .nav-links { order: 0; width: auto; flex: 1; }            /* Pantalla grande: en el medio de la barra */
+}
+.nav-link { color: inherit; text-decoration: none; padding: .25rem 0; border-bottom: 2px solid transparent; }
+.nav-link:hover { opacity: .7; }
+.nav-link-active { border-bottom-color: #16a34a; font-weight: 600; } /* Subrayado verde en la página actual */
+
+/* ===== Inicio ===== */
+.hero { text-align: center; padding: 3rem 1.5rem; }
+.hero-title { font-size: 2rem; font-weight: 800; }
+.hero-text { margin: .75rem 0 1.5rem; color: #6b7280; }
+.hero-btn { display: inline-block; text-decoration: none; }  /* Para que el Link se vea como botón */
+
+/* ===== Detalle: cantidad y aviso ===== */
+.qty-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.qty-box { display: flex; align-items: center; gap: .5rem; border: 1px solid #d1d5db; border-radius: .375rem; padding: .25rem .5rem; }
+.added-msg { color: #16a34a; font-weight: 600; }
+
+/* ===== Stock y botones del detalle ===== */
+.stock-ok { color: #16a34a; font-weight: 600; }
+.stock-out { color: #dc2626; font-weight: 600; }
+.secondary-btn {
+  background: transparent; color: #16a34a;               /* Botón con borde verde y fondo transparente */
+  border: 1px solid #16a34a; border-radius: .375rem; padding: .5rem 1rem; cursor: pointer;
+}
+.secondary-btn:hover { background: rgba(22, 163, 74, .1); }
+
+/* ===== Checkout: foto chica ===== */
+.thumb-sm {
+  width: 4rem; height: 4rem; object-fit: contain;        /* La foto se ve entera, sin recortar */
+  background: #f5f5f5; border-radius: .375rem;
+  display: flex; align-items: center; justify-content: center; /* Centra el emoji de respaldo */
+}
+
+/* ===== Footer ===== */
+.footer { background: #ffffff; box-shadow: 0 -1px 4px rgba(0, 0, 0, .15); padding: 2rem 1rem 1rem; margin-top: 2rem; }
+.footer-inner {
+  max-width: 80rem; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr; gap: 1.5rem;     /* 1 columna en celular */
+}
+@media (min-width: 768px) { .footer-inner { grid-template-columns: repeat(3, 1fr); } } /* 3 columnas en pantalla grande */
+.footer-col { display: flex; flex-direction: column; gap: .25rem; }
+.footer-col a { color: inherit; text-decoration: none; }
+.footer-col a:hover { text-decoration: underline; }
+.footer-copy { text-align: center; font-size: .75rem; color: #6b7280; margin-top: 1.5rem; }
+
+/* Modo oscuro */
+.dark .login-card { background: #1f2937; color: #f3f4f6; }
+.dark .login-input { border-color: #4b5563; }
+.dark .login-divider { color: #9ca3af; }
+.dark .login-divider::before, .dark .login-divider::after { background: #4b5563; }
+.dark .google-btn { background: #ffffff; color: #1f2937; } /* Se mantiene blanco: así lo pide Google */
+.dark .hero-text { color: #d1d5db; }
+.dark .qty-box { border-color: #4b5563; }
+.dark .footer { background: #1f2937; color: #f3f4f6; }
+.dark .thumb-sm { background: #374151; }
+.dark .secondary-btn { color: #4ade80; border-color: #4ade80; }
+
+
