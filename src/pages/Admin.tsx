@@ -1,14 +1,17 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'; // NUEVO: ChangeEvent
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
 import { getAllOrders, updateOrderStatus, deleteOrder } from '../services/orderService';
-import { uploadImage } from '../services/imageService'; // NUEVO: sube la foto a S3
+import { uploadImage } from '../services/imageService';
 import type { Product, Order, OrderStatus } from '../types';
 import ProductImage from '../components/ProductImage';
 
 const STATUSES: OrderStatus[] = ['pending', 'processing', 'completed', 'cancelled'];
-// NUEVO: imageKey guarda el nombre de la foto en S3
-const EMPTY = { name: '', price: '', category: '', emoji: '🎾', imageUrl: '', imageKey: '', description: '', features: '', stock: '' };
+const EMPTY = {
+  name: '', price: '', category: '', emoji: '🎾', imageUrl: '', imageKey: '',
+  extraImageKeys: [] as string[],                      // Lista de fotos adicionales (nombres en S3)
+  description: '', features: '', stock: '',
+};
 
 export default function Admin() {
   const { isAdmin } = useAuth();
@@ -16,8 +19,8 @@ export default function Admin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);   // NUEVO: true mientras se sube la foto
-  const [uploadError, setUploadError] = useState('');  // NUEVO: mensaje si falla la subida
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   async function reload() {
     const [p, o] = await Promise.all([getProducts(), getAllOrders()]);
@@ -30,10 +33,9 @@ export default function Admin() {
     setEditingId(p.id);
     setForm({
       name: p.name, price: String(p.price), category: p.category, emoji: p.emoji,
-      imageUrl: p.imageUrl ?? '',
-      imageKey: p.imageKey ?? '',                       // NUEVO
-      description: p.description ?? '',
-      features: (p.features ?? []).join('\n'),
+      imageUrl: p.imageUrl ?? '', imageKey: p.imageKey ?? '',
+      extraImageKeys: p.extraImageKeys ?? [],
+      description: p.description ?? '', features: (p.features ?? []).join('\n'),
       stock: String(p.stock ?? 0),
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -41,27 +43,39 @@ export default function Admin() {
 
   function cancelEdit() { setEditingId(null); setForm(EMPTY); setUploadError(''); }
 
-  // NUEVO: se ejecuta cuando elegís un archivo
-  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+  // Sube el archivo elegido y devuelve su "key" (o null si algo falla). Lo usan las dos zonas de subida
+  async function pickImage(e: ChangeEvent<HTMLInputElement>): Promise<string | null> {
     const file = e.target.files?.[0];
-    e.target.value = '';                                // Permite volver a elegir el mismo archivo
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { setUploadError('La imagen pesa más de 2 MB'); return; } // Límite de tamaño
+    e.target.value = '';                                 // Permite volver a elegir el mismo archivo
+    if (!file) return null;
+    if (file.size > 2 * 1024 * 1024) { setUploadError('La imagen pesa más de 2 MB'); return null; }
     setUploading(true);
     setUploadError('');
-    try {
-      const key = await uploadImage(file);              // Sube a S3 y devuelve el nombre guardado
-      setForm((f) => ({ ...f, imageKey: key }));        // Lo guardamos en el formulario
-    } catch { setUploadError('No se pudo subir la imagen'); }
+    try { return await uploadImage(file); }
+    catch (err) { setUploadError(err instanceof Error ? err.message : 'No se pudo subir la imagen'); return null; }
     finally { setUploading(false); }
+  }
+
+  async function onMainFile(e: ChangeEvent<HTMLInputElement>) {
+    const key = await pickImage(e);
+    if (key) setForm((f) => ({ ...f, imageKey: key }));
+  }
+
+  async function onExtraFile(e: ChangeEvent<HTMLInputElement>) {
+    const key = await pickImage(e);
+    if (key) setForm((f) => ({ ...f, extraImageKeys: [...f.extraImageKeys, key] })); // Suma la nueva al final
+  }
+
+  function removeExtra(key: string) {
+    setForm((f) => ({ ...f, extraImageKeys: f.extraImageKeys.filter((k) => k !== key) }));
   }
 
   async function saveProduct(e: FormEvent) {
     e.preventDefault();
     const data = {
       name: form.name, price: Number(form.price), category: form.category,
-      emoji: form.emoji, imageUrl: form.imageUrl.trim(),
-      imageKey: form.imageKey,                          // NUEVO: se guarda la foto de S3
+      emoji: form.emoji, imageUrl: form.imageUrl.trim(), imageKey: form.imageKey,
+      extraImageKeys: form.extraImageKeys,
       description: form.description.trim(),
       features: form.features.split('\n').map((f) => f.trim()).filter(Boolean),
       stock: Number(form.stock),
@@ -72,63 +86,108 @@ export default function Admin() {
     reload();
   }
 
+  const hasMain = Boolean(form.imageKey || form.imageUrl);
+
   return (
     <div className="stack stack-lg">
       <section className="card">
         <h2 className="title">{editingId ? 'Editar producto' : 'Agregar producto'}</h2>
         <form onSubmit={saveProduct} className="admin-form">
-          <input className="field" placeholder="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <input className="field" type="number" placeholder="Precio" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
-          <input className="field" type="number" min="0" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} required />
-          <input className="field" placeholder="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
-          <input className="field" placeholder="Emoji (si no hay foto)" value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} required />
+          <label className="form-group col-3">
+            <span>Nombre</span>
+            <input className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          </label>
+          <label className="form-group col-3">
+            <span>Categoría</span>
+            <input className="field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
+          </label>
+          <label className="form-group col-2">
+            <span>Precio</span>
+            <input className="field" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+          </label>
+          <label className="form-group col-2">
+            <span>Stock</span>
+            <input className="field" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} required />
+          </label>
+          <label className="form-group col-2">
+            <span>Emoji (si no hay foto)</span>
+            <input className="field" value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} required />
+          </label>
 
-          {/* NUEVO: reemplaza al campo "Link de la imagen". Elegís un archivo de tu computadora */}
-          <div className="field-wide upload-box">
-            {/* El input real queda escondido; esta etiqueta hace de botón y lo abre al tocarla */}
-<label className="file-btn">
-  📷 {form.imageKey || form.imageUrl ? 'Cambiar imagen' : 'Elegir imagen'}
-  <input type="file" className="file-hidden" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
-</label>
-            {uploading && <p className="muted small">Subiendo...</p>}
-            {uploadError && <p className="error-msg">{uploadError}</p>}
-            {/* Vista previa: si hay foto de S3, o si el producto tiene el link viejo */}
-            {(form.imageKey || form.imageUrl) && (
-              <>
-                <ProductImage imageKey={form.imageKey} imageUrl={form.imageUrl} emoji={form.emoji} alt="Vista previa" imgClass="upload-preview" emojiClass="thumb-emoji" />
-                <button type="button" className="link-btn" onClick={() => setForm({ ...form, imageKey: '', imageUrl: '' })}>Quitar foto</button>
-              </>
-            )}
+          {/* Imágenes: la principal a la izquierda, las adicionales a la derecha */}
+          <div className="upload-section col-6">
+            <div className="upload-block">
+              <span className="bold small">Imagen principal</span>
+              <label className="file-btn">
+                📷 {hasMain ? 'Cambiar imagen' : 'Elegir imagen'}
+                <input type="file" className="file-hidden" accept="image/jpeg,image/png,image/webp" onChange={onMainFile} />
+              </label>
+              {hasMain && (
+                <div className="upload-thumb">
+                  <ProductImage imageKey={form.imageKey} imageUrl={form.imageUrl} emoji={form.emoji} alt="Imagen principal" imgClass="upload-preview" emojiClass="upload-preview" />
+                  <button type="button" className="thumb-remove" aria-label="Quitar imagen principal"
+                    onClick={() => setForm({ ...form, imageKey: '', imageUrl: '' })}>✕</button>
+                </div>
+              )}
+            </div>
+
+            <div className="upload-block">
+              <span className="bold small">Imágenes adicionales</span>
+              <label className="file-btn">
+                ➕ Agregar otra imagen
+                <input type="file" className="file-hidden" accept="image/jpeg,image/png,image/webp" onChange={onExtraFile} />
+              </label>
+              <div className="upload-thumbs">
+                {form.extraImageKeys.map((k) => (
+                  <div key={k} className="upload-thumb">
+                    <ProductImage imageKey={k} emoji={form.emoji} alt="Imagen adicional" imgClass="upload-preview" emojiClass="upload-preview" />
+                    <button type="button" className="thumb-remove" aria-label="Quitar imagen" onClick={() => removeExtra(k)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {uploading && <p className="muted small col-6">Subiendo imagen...</p>}
+            {uploadError && <p className="error-msg col-6">{uploadError}</p>}
           </div>
 
-          <textarea className="field field-wide" rows={2} placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <textarea className="field field-wide" rows={4} placeholder={'Características (una por línea)\nEj: Forma: Diamante\nEj: Peso: 365 g'} value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} />
+          <label className="form-group col-3">
+            <span>Descripción</span>
+            <textarea className="field" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </label>
+          <label className="form-group col-3">
+            <span>Características (una por línea)</span>
+            <textarea className="field" placeholder={'Forma: Diamante\nPeso: 365 g'} value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} />
+          </label>
 
-          {/* NUEVO: disabled={uploading} evita guardar mientras la foto todavía se está subiendo */}
-          <button className="primary-btn" disabled={uploading}>{editingId ? 'Guardar cambios' : 'Agregar'}</button>
-          {editingId && <button type="button" className="danger-btn" onClick={cancelEdit}>Cancelar edición</button>}
+          <div className="form-actions col-6">
+            <button className="primary-btn" disabled={uploading}>{editingId ? 'Guardar cambios' : 'Agregar producto'}</button>
+            {editingId && <button type="button" className="danger-btn" onClick={cancelEdit}>Cancelar edición</button>}
+          </div>
         </form>
       </section>
 
       <section className="card">
-        <h2 className="title">Productos</h2>
+        <h2 className="title">Productos ({products.length})</h2>
         {products.map((p) => (
           <div key={p.id} className="row">
             <span className="row-info">
-              {/* NUEVO: ProductImage muestra la foto de S3, la de link o el emoji */}
               <ProductImage imageKey={p.imageKey} imageUrl={p.imageUrl} emoji={p.emoji} alt={p.name} imgClass="thumb" emojiClass="thumb-emoji" />
-              {p.name} · ${p.price.toLocaleString('es-AR')} · {p.category} · stock {p.stock ?? 0}
+              <span>
+                <span className="bold">{p.name}</span>
+                <span className="muted small row-meta">${p.price.toLocaleString('es-AR')} · {p.category} · stock {p.stock ?? 0}</span>
+              </span>
             </span>
-            <span>
+            <span className="row-actions">
               <button className="icon-btn" onClick={() => startEdit(p)} aria-label="Editar">✏️</button>
-              <button className="icon-btn" onClick={async () => { await deleteProduct(p.id); reload(); }} aria-label="Borrar">🗑️</button>
+              <button className="icon-btn" onClick={async () => { if (window.confirm('¿Borrar este producto?')) { await deleteProduct(p.id); reload(); } }} aria-label="Borrar">🗑️</button>
             </span>
           </div>
         ))}
       </section>
 
       <section className="card">
-        <h2 className="title">Órdenes</h2>
+        <h2 className="title">Órdenes ({orders.length})</h2>
         {orders.length === 0 && <p>No hay órdenes todavía.</p>}
         {orders.map((o) => (
           <div key={o.id} className="row">
@@ -136,7 +195,7 @@ export default function Admin() {
               <p className="muted small">{new Date(o.createdAt).toLocaleString('es-AR')} · {o.userId}</p>
               <p>{o.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')} — <b>${o.total.toLocaleString('es-AR')}</b></p>
             </div>
-            <span>
+            <span className="row-actions">
               <select className="field" value={o.status}
                 onChange={async (e) => { await updateOrderStatus(o.id, e.target.value as OrderStatus); reload(); }}>
                 {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}

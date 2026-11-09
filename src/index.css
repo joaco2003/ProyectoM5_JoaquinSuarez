@@ -169,8 +169,7 @@ background-color: #111827;
 .total { text-align: right; font-weight: 700; margin-top: 1rem; }
 
 /* ===== Admin ===== */
-.admin-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
-@media (min-width: 768px) { .admin-form { grid-template-columns: repeat(3, 1fr); } }
+
 .thumb { width: 2.5rem; height: 2.5rem; object-fit: cover; border-radius: .25rem; }
 .thumb-emoji { font-size: 1.5rem; }
 
@@ -223,24 +222,48 @@ background-color: #111827;
 }
 .google-btn:hover { background: #f3f4f6; }
 /* ===== Detalle de producto ===== */
-/* Detalle: sin overflow hidden, para que nunca recorte el contenido */
-.detail { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 0; align-items: start; }
-@media (min-width: 768px) { .detail { grid-template-columns: 1fr 1fr; } }
+.pd { display: grid; grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
+@media (min-width: 1024px) { .pd { grid-template-columns: 2fr 1fr; } } /* Galería ancha a la izquierda, info a la derecha */
 
-
-/* ===== Formulario admin ===== */
-.field-wide { grid-column: 1 / -1; }            /* El campo ocupa todo el ancho de la grilla */
-textarea.field { resize: vertical; font-family: inherit; }
-
-/* ===== Navbar con links ===== */
-.navbar { flex-wrap: wrap; row-gap: .5rem; }              /* En celular, los links bajan a otra fila */
-.nav-links { display: flex; gap: 1.5rem; order: 3; width: 100%; justify-content: center; } /* Celular: fila propia */
-@media (min-width: 768px) {
-  .nav-links { order: 0; width: auto; flex: 1; }            /* Pantalla grande: en el medio de la barra */
+/* Galería: en celular se desliza horizontalmente con el dedo */
+.gallery { display: flex; gap: .75rem; overflow-x: auto; scroll-snap-type: x mandatory; }
+.gallery-item {
+  flex: 0 0 85%;                       /* Cada foto ocupa el 85% del ancho, así se asoma la siguiente */
+  scroll-snap-align: start;            /* Al deslizar, la foto queda alineada */
+  aspect-ratio: 3 / 4;                 /* Recuadro vertical, como en tu ejemplo */
+  background: #f5f5f5; border-radius: .5rem;
+  display: flex; align-items: center; justify-content: center;
 }
-.nav-link { color: inherit; text-decoration: none; padding: .25rem 0; border-bottom: 2px solid transparent; }
-.nav-link:hover { opacity: .7; }
-.nav-link-active { border-bottom-color: #16a34a; font-weight: 600; } /* Subrayado verde en la página actual */
+.gallery-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; } /* La foto se ve entera, sin recortar */
+
+/* En pantalla grande las fotos se ordenan en una grilla de 2 columnas, sin deslizar */
+@media (min-width: 768px) {
+  .gallery { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; }
+  .gallery-item { flex: none; }
+  .gallery-single { grid-template-columns: 1fr; }  /* Con una sola foto, ocupa todo el ancho */
+}
+
+/* La columna de info acompaña mientras bajás por las fotos */
+.pd-info { display: flex; flex-direction: column; gap: .75rem; align-items: flex-start; }
+@media (min-width: 1024px) { .pd-info { position: sticky; top: 1rem; } }
+
+/* ===== Secciones desplegables (+ / −) ===== */
+.accordions { width: 100%; margin-top: .5rem; }
+.accordion { border-top: 1px solid #e5e7eb; }
+.accordion:last-child { border-bottom: 1px solid #e5e7eb; }
+.accordion summary {
+  display: flex; justify-content: space-between; align-items: center;  /* Título a la izquierda, símbolo a la derecha */
+  padding: 1rem 0; font-weight: 600; cursor: pointer;
+  list-style: none;                                                    /* Saca la flechita nativa */
+}
+.accordion summary::-webkit-details-marker { display: none; }          /* Ídem para Chrome y Safari */
+.accordion summary::after { content: '+'; font-size: 1.5rem; font-weight: 400; } /* Símbolo cuando está cerrado */
+.accordion[open] summary::after { content: '−'; }                      /* Símbolo cuando está abierto */
+.accordion p, .accordion .features { padding-bottom: 1rem; }
+
+/* ===== Subida de varias imágenes (Admin) ===== */
+
+.upload-item { display: flex; align-items: flex-start; gap: .25rem; }
 
 /* ===== Inicio ===== */
 .hero { text-align: center; padding: 3rem 1.5rem; }
@@ -281,10 +304,6 @@ textarea.field { resize: vertical; font-family: inherit; }
 .footer-col a:hover { text-decoration: underline; }
 .footer-copy { text-align: center; font-size: .75rem; color: #6b7280; margin-top: 1.5rem; }
 
-/* ===== Subida de imagen (Admin) ===== */
-.upload-box { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
-.upload-preview { width: 6rem; height: 6rem; object-fit: contain; background: #f5f5f5; border-radius: .375rem; } /* Vista previa de la foto subida */
-
 /* ===== Botón de elegir archivo ===== */
 .file-hidden { display: none; }              /* Esconde el input nativo, el feo */
 .file-btn {
@@ -306,6 +325,46 @@ textarea.field { resize: vertical; font-family: inherit; }
 }
 .danger-btn:hover { background: #b91c1c; }   /* Rojo más oscuro al pasar el mouse */
 .danger-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ===== Formulario de Admin ===== */
+.admin-form { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: start; } /* Celular: una columna */
+@media (min-width: 768px) {
+  .admin-form { grid-template-columns: repeat(6, 1fr); }  /* Pantalla grande: 6 columnas para combinar anchos */
+  .col-2 { grid-column: span 2; }                         /* Ocupa 2 de 6 */
+  .col-3 { grid-column: span 3; }                         /* Ocupa 3 de 6 (la mitad) */
+}
+.col-6 { grid-column: 1 / -1; }                           /* Ocupa todo el ancho */
+
+.form-group { display: flex; flex-direction: column; gap: .35rem; }   /* Etiqueta arriba, campo abajo */
+.form-group > span { font-size: .8rem; font-weight: 600; color: #6b7280; }
+.form-group textarea { min-height: 8rem; resize: vertical; }
+
+/* Zona de imágenes */
+.upload-section {
+  border: 1px dashed #d1d5db; border-radius: .5rem; padding: 1rem;
+  display: grid; grid-template-columns: 1fr; gap: 1.25rem;
+}
+@media (min-width: 768px) { .upload-section { grid-template-columns: 1fr 2fr; } }
+.upload-block { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
+.upload-thumbs { display: flex; flex-wrap: wrap; gap: .75rem; }
+.upload-thumb { position: relative; }                     /* Para ubicar la ✕ encima de la foto */
+.upload-preview {
+  width: 6rem; height: 6rem; object-fit: contain;
+  background: #f5f5f5; border-radius: .375rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.thumb-remove {
+  position: absolute; top: -.4rem; right: -.4rem;         /* Pegada a la esquina superior derecha */
+  width: 1.4rem; height: 1.4rem; border-radius: 9999px; border: 0;
+  background: #dc2626; color: #fff; font-size: .7rem; cursor: pointer;
+}
+
+.form-actions { display: flex; gap: .75rem; flex-wrap: wrap; } /* Guardar y Cancelar lado a lado */
+
+/* Filas de productos y órdenes */
+.row-actions { display: flex; align-items: center; gap: .5rem; }
+.row-meta { display: block; }                              /* El precio y la categoría van debajo del nombre */
+
 /* Modo oscuro */
 .dark .login-card { background: #1f2937; color: #f3f4f6; }
 .dark .login-input { border-color: #4b5563; }
@@ -318,5 +377,8 @@ textarea.field { resize: vertical; font-family: inherit; }
 .dark .thumb-sm { background: #374151; }
 .dark .secondary-btn { color: #4ade80; border-color: #4ade80; }
 .dark .file-btn { color: #4ade80; border-color: #4ade80; }
+.dark .accordion, .dark .accordion:last-child { border-color: #374151; }
+.dark .upload-section { border-color: #4b5563; }
+.dark .form-group > span { color: #9ca3af; }
 
 

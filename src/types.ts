@@ -7,6 +7,7 @@ export interface Product {
   emoji: string;     // Usamos un emoji como "imagen" para simplificar
   imageUrl?: string; // Link a la foto del producto. El "?" significa que es opcional
   imageKey?: string;   // Nombre de la foto en S3 (ej: products/abc.jpg)
+    extraImageKeys?: string[]; // Fotos adicionales en S3 (además de la principal)
   description?: string;  // Descripción corta del producto
   features?: string[];   // Lista de características (una por ítem)
     stock?: number;     // Unidades disponibles (si falta, se considera 0)
