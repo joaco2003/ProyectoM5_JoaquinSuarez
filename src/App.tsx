@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { getProducts } from './services/productService';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
@@ -37,48 +38,94 @@ export default function App() {
   const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const count = items.reduce((s, i) => s + i.quantity, 0);
+    const navigate = useNavigate();
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const q = params.get('q') ?? '';
+  const [catOpen, setCatOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  // Categorías = las que tienen los productos cargados desde el admin
+  useEffect(() => {
+    getProducts().then((ps) => setCategories([...new Set(ps.map((p) => p.category))].filter(Boolean)));
+  }, [location.pathname]);
+
+  // Escribir en el buscador lleva a /products?q=... (conservando la categoría elegida)
+  const onSearch = (value: string) => {
+    const next = new URLSearchParams(location.pathname === '/products' ? params : undefined);
+    if (value) next.set('q', value); else next.delete('q');
+    const s = next.toString();
+    navigate({ pathname: '/products', search: s ? `?${s}` : '' }, { replace: location.pathname === '/products' });
+  };
 
   return (
     <div className="app">
-      <nav className="navbar">
-        <Link to="/" className="navbar-logo">🎾 Pádel Shop</Link>
+            <nav className="navbar">
+        {/* Fila de arriba: logo, buscador y acciones */}
+        <div className="navbar-top">
+          <Link to="/" className="navbar-logo">🎾 Pádel Shop</Link>
 
-        {/* Links de navegación. "end" en Inicio evita que quede marcado en todas las páginas */}
-        <div className="nav-links">
-          <NavLink to="/" end className={linkClass}>Inicio</NavLink>
-          <NavLink to="/products" className={linkClass}>Productos</NavLink>
+          <input
+            className="navbar-search"
+            type="search"
+            placeholder="¿Qué estás buscando?"
+            value={q}
+            onChange={(e) => onSearch(e.target.value)}
+          />
+
+          <div className="navbar-actions">
+            <button className="icon-btn" onClick={toggle} aria-label="Cambiar tema">
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+
+            <div className="account">
+              {user ? (
+                <button className="icon-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Mi cuenta">
+                  <UserIcon />
+                </button>
+              ) : (
+                <Link className="icon-btn" to="/login" aria-label="Ingresar">
+                  <UserIcon />
+                </Link>
+              )}
+
+              {user && menuOpen && (
+                <div className="account-menu" onClick={() => setMenuOpen(false)}>
+                  <p className="account-email">{user.email}</p>
+                  <Link className="account-link" to="/orders">Mis órdenes</Link>
+                  {isAdmin && <Link className="account-link" to="/admin">Admin</Link>}
+                  <button className="account-link" onClick={logout}>Salir</button>
+                </div>
+              )}
+            </div>
+
+            <Link to="/cart" className="cart-link" aria-label="Carrito">
+              <BagIcon />
+              <span className="cart-badge">{count}</span>
+            </Link>
+          </div>
         </div>
 
-        <div className="navbar-actions">
-          <button className="icon-btn" onClick={toggle} aria-label="Cambiar tema">
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
+        {/* Fila de abajo: links */}
+        <div className="navbar-bottom">
+          <div className="nav-links">
+            <NavLink to="/" end className={linkClass}>Inicio</NavLink>
+            <NavLink to="/products" end className={linkClass}>Productos</NavLink>
 
-          <div className="account">
-            {user ? (
-              <button className="icon-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Mi cuenta">
-                <UserIcon />
+            <div className="cat-dropdown" onMouseLeave={() => setCatOpen(false)}>
+              <button type="button" className="nav-link cat-btn" onClick={() => setCatOpen(!catOpen)}>
+                Categorías ▾
               </button>
-            ) : (
-              <Link className="icon-btn" to="/login" aria-label="Ingresar">
-                <UserIcon />
-              </Link>
-            )}
-
-            {user && menuOpen && (
-              <div className="account-menu" onClick={() => setMenuOpen(false)}>
-                <p className="account-email">{user.email}</p>
-                <Link className="account-link" to="/orders">Mis órdenes</Link>
-                {isAdmin && <Link className="account-link" to="/admin">Admin</Link>}
-                <button className="account-link" onClick={logout}>Salir</button>
-              </div>
-            )}
+              {catOpen && (
+                <div className="cat-menu" onClick={() => setCatOpen(false)}>
+                  <Link className="account-link" to="/products">Todas</Link>
+                  {categories.map((c) => (
+                    <Link key={c} className="account-link" to={`/products?cat=${encodeURIComponent(c)}`}>{c}</Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-
-          <Link to="/cart" className="cart-link" aria-label="Carrito">
-            <BagIcon />
-            <span className="cart-badge">{count}</span>
-          </Link>
         </div>
       </nav>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getProducts, seedProducts } from '../services/productService';
 import { useDebounce } from '../hooks/useDebounce';
 import ProductCard from '../components/ProductCard';
@@ -6,11 +7,18 @@ import type { Product } from '../types';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState('Todas');
-  const [search, setSearch] = useState('');
   const [sort, setSort] = useState('none');
-  const debouncedSearch = useDebounce(search);
 
+  const [params, setParams] = useSearchParams();
+  const category = params.get('cat') ?? 'Todas';
+  const setCategory = (c: string) => {
+    const next = new URLSearchParams(params);
+    if (c === 'Todas') next.delete('cat'); else next.set('cat', c);
+    setParams(next);
+  };
+
+  const search = params.get('q') ?? '';
+  const debouncedSearch = useDebounce(search);
   useEffect(() => { getProducts().then(setProducts); }, []);
 
   const categories = ['Todas', ...new Set(products.map((p) => p.category))];
@@ -24,19 +32,21 @@ export default function Home() {
 
   return (
     <div>
-      <div className="filters">
-        <input className="field filters-search" placeholder="Buscar producto..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select className="field" value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="none">Ordenar por</option>
-          <option value="asc">Precio: menor a mayor</option>
-          <option value="desc">Precio: mayor a menor</option>
-        </select>
-      </div>
+      <div className="filter-bar">
+        <div className="chips">
+          {categories.map((c) => (
+            <button key={c} onClick={() => setCategory(c)} className={c === category ? 'chip chip-active' : 'chip'}>{c}</button>
+          ))}
+        </div>
 
-      <div className="chips">
-        {categories.map((c) => (
-          <button key={c} onClick={() => setCategory(c)} className={c === category ? 'chip chip-active' : 'chip'}>{c}</button>
-        ))}
+        <div className="filter-right">
+          <select className="field" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="none">Ordenar por</option>
+            <option value="asc">Precio: menor a mayor</option>
+            <option value="desc">Precio: mayor a menor</option>
+          </select>
+          <span className="filter-count">{visible.length} productos</span>
+        </div>
       </div>
 
       {products.length === 0 && (
