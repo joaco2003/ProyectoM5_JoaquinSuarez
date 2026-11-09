@@ -6,6 +6,7 @@ export interface Product {
   category: string;  // Categoría para filtrar
   emoji: string;     // Usamos un emoji como "imagen" para simplificar
   imageUrl?: string; // Link a la foto del producto. El "?" significa que es opcional
+  imageKey?: string;   // Nombre de la foto en S3 (ej: products/abc.jpg)
   description?: string;  // Descripción corta del producto
   features?: string[];   // Lista de características (una por ítem)
     stock?: number;     // Unidades disponibles (si falta, se considera 0)
@@ -17,6 +18,7 @@ export interface CartItem {
   quantity: number;  // Cantidad
   imageUrl?: string;  // Foto chica para mostrar en el checkout
   emoji?: string;     // Emoji de respaldo si no hay foto
+    imageKey?: string;
 }
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'; // Estados permitidos
 export interface Order {

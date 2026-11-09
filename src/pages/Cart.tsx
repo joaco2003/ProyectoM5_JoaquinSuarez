@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrdersContext';
 import { createOrder } from '../services/orderService';
+import ProductImage from '../components/ProductImage';
 
 export default function Cart() {
   const { items, total, dispatch } = useCart();
@@ -40,9 +41,7 @@ export default function Cart() {
         <div key={i.productId} className="row">
           <div className="row-info">
             {/* Foto chiquita; si no hay, el emoji. Los carritos viejos no tienen emoji, de ahí el respaldo */}
-            {i.imageUrl
-              ? <img src={i.imageUrl} alt={i.name} className="thumb-sm" />
-              : <span className="thumb-sm thumb-emoji">{i.emoji ?? '🎾'}</span>}
+            <ProductImage imageKey={i.imageKey} imageUrl={i.imageUrl} emoji={i.emoji} alt={i.name} imgClass="thumb-sm" emojiClass="thumb-sm thumb-emoji" />
             <div>
               <p className="bold">{i.name}</p>
               <p className="muted small">${i.price.toLocaleString('es-AR')} c/u</p>

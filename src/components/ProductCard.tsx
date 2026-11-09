@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { toCartItem } from '../utils/toCartItem';
 import type { Product } from '../types';
+import ProductImage from '../components/ProductImage';
 
 export default function ProductCard({ product: p }: { product: Product }) {
   const { dispatch } = useCart();
@@ -10,11 +11,7 @@ export default function ProductCard({ product: p }: { product: Product }) {
   return (
     <div className="card product-card">
       <Link to={`/product/${p.id}`} className="product-link">
-        <div className="img-box">
-          {p.imageUrl
-            ? <img src={p.imageUrl} alt={p.name} className="product-img" />
-            : <div className="product-emoji">{p.emoji}</div>}
-        </div>
+        <ProductImage imageKey={p.imageKey} imageUrl={p.imageUrl} emoji={p.emoji} alt={p.name} imgClass="product-img" emojiClass="product-emoji" />
         <div className="product-info">
           <h3 className="product-name">{p.name}</h3>
           <p className="product-price">${p.price.toLocaleString('es-AR')}</p>

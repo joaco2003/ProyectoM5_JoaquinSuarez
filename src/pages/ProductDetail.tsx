@@ -4,6 +4,7 @@ import { getProduct } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { toCartItem } from '../utils/toCartItem';
 import type { Product } from '../types';
+import ProductImage from '../components/ProductImage';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -36,11 +37,15 @@ export default function ProductDetail() {
       <Link to="/products" className="back-link">← Volver al catálogo</Link>
       <div className="card detail">
         <div className="img-box">
-          {product.imageUrl
-            ? <img src={product.imageUrl} alt={product.name} className="product-img" />
-            : <div className="product-emoji">{product.emoji}</div>}
-        </div>
-
+  <ProductImage
+    imageKey={product.imageKey}
+    imageUrl={product.imageUrl}
+    emoji={product.emoji}
+    alt={product.name}
+    imgClass="product-img"
+    emojiClass="product-emoji"
+  />
+</div>
         <div className="detail-info">
           <p className="muted small">{product.category}</p>
           <h2 className="detail-title">{product.name}</h2>
