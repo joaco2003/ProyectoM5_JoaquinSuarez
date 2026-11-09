@@ -26,6 +26,9 @@
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
   },
+  "overrides": {
+    "jwks-rsa": "3.2.0"
+  },
   "engines": {
     "node": "22.x"
   }
