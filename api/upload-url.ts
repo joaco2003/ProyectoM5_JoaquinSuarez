@@ -2,8 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
-import { requireAdmin } from './auth.js';
-import { s3, BUCKET } from './s3.js';
+import { requireAdmin } from './_lib/auth.js';
+import { s3, BUCKET } from './_lib/s3.js';
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];   // Únicos formatos permitidos
 
