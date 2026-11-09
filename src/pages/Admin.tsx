@@ -85,7 +85,11 @@ export default function Admin() {
 
           {/* NUEVO: reemplaza al campo "Link de la imagen". Elegís un archivo de tu computadora */}
           <div className="field-wide upload-box">
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
+            {/* El input real queda escondido; esta etiqueta hace de botón y lo abre al tocarla */}
+<label className="file-btn">
+  📷 {form.imageKey || form.imageUrl ? 'Cambiar imagen' : 'Elegir imagen'}
+  <input type="file" className="file-hidden" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
+</label>
             {uploading && <p className="muted small">Subiendo...</p>}
             {uploadError && <p className="error-msg">{uploadError}</p>}
             {/* Vista previa: si hay foto de S3, o si el producto tiene el link viejo */}
@@ -102,7 +106,7 @@ export default function Admin() {
 
           {/* NUEVO: disabled={uploading} evita guardar mientras la foto todavía se está subiendo */}
           <button className="primary-btn" disabled={uploading}>{editingId ? 'Guardar cambios' : 'Agregar'}</button>
-          {editingId && <button type="button" className="link-btn" onClick={cancelEdit}>Cancelar edición</button>}
+          {editingId && <button type="button" className="danger-btn" onClick={cancelEdit}>Cancelar edición</button>}
         </form>
       </section>
 

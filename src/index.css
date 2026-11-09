@@ -131,30 +131,37 @@ background-color: #111827;
 
 
 /* ===== Catálogo: cards grandes ===== */
-.product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }     /* 2 columnas en celular */
-@media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }  /* 3 en tablet */
-@media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } } /* 4 en pantalla grande */
+.product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+@media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
+.product-grid > * { min-width: 0; }
 
-.product-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; } /* Sin margen interno: la imagen llega a los bordes */
+.product-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .product-link { display: block; color: inherit; text-decoration: none; }
 
 .img-box {
-  aspect-ratio: 1 / 1;                 /* Recuadro cuadrado, como en tu imagen de ejemplo */
-  background: #f5f5f5;                 /* Gris clarito de fondo */
+  aspect-ratio: 1 / 1;
+  background: #f5f5f5;
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  isolation: isolate;   /* única línea nueva: arregla el oscurecido en modo oscuro */
 }
 .product-img {
   width: 100%; height: 100%;
-  object-fit: contain;                 /* La foto se ve ENTERA, sin recortar */
+  object-fit: contain;
   padding: .75rem;
-  mix-blend-mode: multiply;            /* El blanco de la foto se mezcla con el gris y desaparece */
+  mix-blend-mode: multiply;
 }
-.product-emoji { font-size: 5rem; }
+.product-emoji {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5rem;
+}
 
-.product-info { padding: .75rem 1rem .5rem; text-align: left; }
-.product-name { font-weight: 600; font-size: .95rem; }
-.product-price { color: #dc2626; font-weight: 700; font-size: 1.1rem; margin-top: .25rem; } /* Precio en rojo */
-.product-add { margin: auto 1rem 1rem; }  /* Botón al fondo de la card, con margen */
+.product-info { flex: 1; padding: .75rem 1rem .5rem; text-align: left; }
+.product-name { font-weight: 600; font-size: .95rem; overflow-wrap: anywhere; }
+.product-price { color: #dc2626; font-weight: 700; font-size: 1.1rem; margin-top: .25rem; }
+.product-add { margin: auto 1rem 1rem; }
 
 
 /* ===== Carrito ===== */
@@ -219,7 +226,7 @@ background-color: #111827;
 /* Detalle: sin overflow hidden, para que nunca recorte el contenido */
 .detail { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 0; align-items: start; }
 @media (min-width: 768px) { .detail { grid-template-columns: 1fr 1fr; } }
-.detail .img-box { border-radius: .5rem; }
+
 
 /* ===== Formulario admin ===== */
 .field-wide { grid-column: 1 / -1; }            /* El campo ocupa todo el ancho de la grilla */
@@ -277,6 +284,28 @@ textarea.field { resize: vertical; font-family: inherit; }
 /* ===== Subida de imagen (Admin) ===== */
 .upload-box { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
 .upload-preview { width: 6rem; height: 6rem; object-fit: contain; background: #f5f5f5; border-radius: .375rem; } /* Vista previa de la foto subida */
+
+/* ===== Botón de elegir archivo ===== */
+.file-hidden { display: none; }              /* Esconde el input nativo, el feo */
+.file-btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .5rem 1rem;
+  border: 1px dashed #16a34a;                /* Borde verde punteado: indica "soltá o elegí un archivo" */
+  border-radius: .375rem;
+  color: #16a34a; font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.file-btn:hover { background: rgba(22, 163, 74, .1); }
+
+/* ===== Botón rojo (cancelar, acciones peligrosas) ===== */
+.danger-btn {
+  background: #dc2626; color: #ffffff;       /* Fondo rojo, texto blanco */
+  border: 0; border-radius: .375rem;
+  padding: .5rem 1rem; cursor: pointer;
+}
+.danger-btn:hover { background: #b91c1c; }   /* Rojo más oscuro al pasar el mouse */
+.danger-btn:disabled { opacity: .5; cursor: not-allowed; }
 /* Modo oscuro */
 .dark .login-card { background: #1f2937; color: #f3f4f6; }
 .dark .login-input { border-color: #4b5563; }
@@ -288,5 +317,6 @@ textarea.field { resize: vertical; font-family: inherit; }
 .dark .footer { background: #1f2937; color: #f3f4f6; }
 .dark .thumb-sm { background: #374151; }
 .dark .secondary-btn { color: #4ade80; border-color: #4ade80; }
+.dark .file-btn { color: #4ade80; border-color: #4ade80; }
 
 
