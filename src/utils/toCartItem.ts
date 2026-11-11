@@ -8,6 +8,6 @@ export function toCartItem(p: Product): Omit<CartItem, 'quantity'> {
     imageUrl: p.imageUrl ?? '',
     imageKey: p.imageKey ?? '',
     emoji: p.emoji ?? '🎾',
-    stock: p.stock ?? 0,          // NUEVO: el tope viaja con el ítem
+    stock: p.stock ?? 0,          
   };
 }

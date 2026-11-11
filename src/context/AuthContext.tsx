@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInWithPopup, GoogleAuthProvider,           // NUEVO: para entrar con la ventanita de Google
+  signInWithPopup, GoogleAuthProvider,           
   signOut, type User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -15,7 +15,7 @@ interface AuthValue {
   loading: boolean;
   login: (e: string, p: string) => Promise<unknown>;
   register: (e: string, p: string) => Promise<unknown>;
-  loginWithGoogle: () => Promise<void>;          // NUEVO
+  loginWithGoogle: () => Promise<void>;          
   logout: () => Promise<void>;
 }
 const AuthContext = createContext<AuthValue | null>(null);
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', cred.user.uid), { email, role: 'customer' });
     },
-    // NUEVO: entrar con Google
+   
     loginWithGoogle: async () => {
       const cred = await signInWithPopup(auth, new GoogleAuthProvider()); // Abre la ventanita de Google
       const ref = doc(db, 'users', cred.user.uid);                        // Perfil de este usuario en Firestore
