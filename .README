@@ -1,0 +1,260 @@
+# 🎾 Pádel Shop
+
+E-commerce de artículos de pádel. Proyecto integrador de Patagonix Tech (SPA full stack): los clientes navegan y compran productos, y los administradores gestionan el catálogo y las órdenes.
+
+**🔗 Demo:** https://padelshop-two.vercel.app
+**📦 Repositorio:** https://github.com/joaco2003/ProyectoM5_JoaquinSuarez
+**👤 Autor:** TU NOMBRE
+
+---
+
+## ✨ Funcionalidades
+
+**Clientes**
+- Registro e inicio de sesión con email/contraseña o Google. La sesión persiste al recargar.
+- Catálogo con filtro por categoría, búsqueda por nombre (con debounce) y orden por precio.
+- Detalle de producto con galería de fotos, stock, selector de cantidad y secciones desplegables (descripción, características, envíos).
+- Carrito con Context API + `useReducer`: agregar, quitar, cambiar cantidad, total automático y tope según el stock disponible.
+- Checkout simulado: crea la orden en Firestore y descuenta el stock con una transacción.
+- Historial de órdenes y detalle de cada una con seguimiento del estado.
+- Perfil con nombre, teléfono y dirección.
+- Carrito persistente en la nube por usuario (se fusiona con el de visitante al iniciar sesión).
+- Modo claro y oscuro.
+
+**Administradores**
+- CRUD completo de productos (crear, editar, borrar) con stock y descripción.
+- Subida de imágenes a AWS S3 (una principal y varias adicionales) mediante URLs prefirmadas.
+- Gestión de órdenes: cambiar estado (`pending`, `processing`, `completed`, `cancelled`) y borrar.
+- Panel protegido por rol.
+
+---
+
+## 🧱 Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 18, TypeScript, Vite, React Router, Context API + `useReducer` |
+| Estilos | CSS propio en `src/index.css` (Tailwind solo como base de Vite) |
+| Autenticación y base de datos | Firebase Authentication + Firestore |
+| Almacenamiento de imágenes | AWS S3 (bucket privado) |
+| Backend serverless | Vercel Serverless Functions (carpeta `api/`) |
+| Testing | Vitest + React Testing Library |
+| Deploy y versiones | Vercel + GitHub |
+
+---
+
+## 🗂️ Arquitectura
+
+La app está organizada en capas, cada una con una sola responsabilidad:
+
+```
+api/                      Funciones serverless (backend)
+├── _lib/s3.ts            Cliente de S3 con claves de las variables de entorno
+├── _lib/auth.ts          Verifica el token de Firebase y el rol admin
+├── upload-url.ts         Devuelve un link de subida de 60 s (solo admin)
+└── image-url.ts          Devuelve un link de lectura de 1 h
+
+src/
+├── main.tsx              Punto de entrada: monta los Providers
+├── App.tsx               Barra superior, rutas y footer
+├── types.ts              Contratos: Product, CartItem, Order, Profile, Role
+├── firebase.ts           Conexión a Firebase
+├── index.css             Todo el diseño
+├── context/              Estado global
+│   ├── AuthContext       Sesión y rol (useReducer)
+│   ├── CartContext       Carrito (useReducer) + sincronización con la nube
+│   ├── cartReducer.ts    Lógica pura del carrito (testeada)
+│   ├── OrdersContext     Órdenes y su ciclo de vida (useReducer)
+│   └── ThemeContext      Modo claro/oscuro
+├── services/             Única capa que habla con Firestore y con /api
+├── hooks/useDebounce.ts  Hook propio para el buscador
+├── components/           ProtectedRoute, ProductCard, ProductImage, Footer
+├── pages/                Landing, Home, ProductDetail, Cart, Login, Orders,
+│                         OrderDetail, Profile, Admin
+├── utils/                toCartItem, orderStatus
+└── test/setup.ts         Configuración de los tests
+```
+
+**Providers (el orden importa):**
+`BrowserRouter → ThemeProvider → AuthProvider → OrdersProvider → CartProvider → App`.
+`OrdersProvider` y `CartProvider` usan `useAuth()`, así que tienen que estar dentro de `AuthProvider`.
+
+### Rutas
+
+| Ruta | Acceso |
+|---|---|
+| `/`, `/products`, `/product/:id`, `/cart`, `/login` | Públicas |
+| `/orders`, `/orders/:id`, `/profile` | Requieren sesión |
+| `/admin` | Requiere sesión y rol `admin` |
+
+### Flujo de imágenes con S3
+
+1. El admin elige una foto. El navegador pide un permiso a `/api/upload-url` enviando su token de Firebase.
+2. La función verifica el token y que el rol sea `admin`, y devuelve un link prefirmado de subida válido por 60 segundos.
+3. El navegador sube la foto **directo a S3**. En Firestore se guarda solo el nombre del archivo (`imageKey`).
+4. Para mostrar una foto, la app pide a `/api/image-url` un link de lectura que vence en 1 hora.
+
+El bucket es privado: las fotos no tienen una dirección pública permanente. Las claves de AWS nunca llegan al navegador.
+
+---
+
+## 🚀 Instalación y uso
+
+### Requisitos
+- Node.js 18 o superior
+- Un proyecto de Firebase (Authentication con Email/Password y Google, y Firestore)
+- Un bucket de S3 y un usuario de IAM (solo para la subida de imágenes)
+
+### Pasos
+
+```bash
+git clone https://github.com/joaco2003/ProyectoM5_JoaquinSuarez
+cd padel-shop
+npm install
+cp .env.example .env     
+npm run dev
+```
+
+> `npm run dev` levanta solo el frontend. Para probar también las funciones de `api/` (subida de imágenes) usá `npx vercel dev`, o probá directamente en el deploy.
+
+### Scripts
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Compila TypeScript y genera la versión de producción |
+| `npm test` | Tests en modo observación |
+| `npm run test:run` | Ejecuta los tests una vez |
+
+### Variables de entorno
+
+**Frontend (`.env` local y Vercel):**
+
+| Variable | Descripción |
+|---|---|
+| `VITE_FIREBASE_API_KEY` | Clave de la app web de Firebase |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Dominio de autenticación |
+| `VITE_FIREBASE_PROJECT_ID` | ID del proyecto |
+| `VITE_FIREBASE_APP_ID` | ID de la app |
+
+**Solo servidor (únicamente en Vercel, sin prefijo `VITE_`):**
+
+| Variable | Descripción |
+|---|---|
+| `S3_BUCKET` | Nombre del bucket |
+| `S3_REGION` | Región del bucket |
+| `S3_ACCESS_KEY_ID` | Clave de acceso del usuario de IAM |
+| `S3_SECRET_ACCESS_KEY` | Secreto del usuario de IAM |
+| `FIREBASE_PROJECT_ID` | `project_id` de la cuenta de servicio |
+| `FIREBASE_CLIENT_EMAIL` | `client_email` de la cuenta de servicio |
+| `FIREBASE_PRIVATE_KEY` | `private_key` de la cuenta de servicio |
+
+Todo lo que empieza con `VITE_` queda visible en el navegador, por eso las claves secretas no lo llevan. Los archivos `.env` y el `.json` de la cuenta de servicio **no se suben** al repositorio.
+
+### Cómo convertirse en administrador
+
+El rol no se puede auto-asignar (las reglas de Firestore lo impiden). Se hace a mano:
+
+1. Registrate en la app.
+2. En Firebase, **Authentication → Usuarios**, copiá tu UID.
+3. En **Firestore → colección `users`**, abrí (o creá) el documento con ese UID y poné el campo `role` en `admin`.
+4. Cerrá sesión y volvé a entrar.
+
+---
+
+## 🔒 Seguridad
+
+- **Reglas de Firestore:** los productos los lee cualquiera y solo los escribe el admin. Cada usuario lee solo sus órdenes, su carrito y su perfil. En `users`, un usuario solo puede editar `name`, `phone` y `address`, nunca su `role`.
+- **Rutas protegidas:** `ProtectedRoute` cuida las pantallas, pero la seguridad real está en las reglas, que se ejecutan en el servidor.
+- **Credenciales:** las claves de AWS y de Firebase Admin viven solo en variables de entorno de Vercel. El usuario de IAM tiene permisos mínimos (leer y escribir únicamente en `products/` de su bucket).
+- **Stock:** al comprar, una transacción de Firestore lee el stock real, cancela la compra si no alcanza y descuenta las unidades de forma atómica.
+
+### Limitaciones conocidas
+
+- Para que el checkout descuente stock desde el cliente, las reglas permiten que cualquier usuario logueado **baje** el stock de un producto. En un sistema real, ese descuento lo haría una función de servidor con permisos de admin.
+- El pago es simulado (según la consigna).
+- Las fotos que se quitan de un producto quedan almacenadas en S3: solo se desvinculan.
+- Los filtros del catálogo se aplican en el navegador; con miles de productos habría que paginar y filtrar en la consulta.
+- No hay recuperación de contraseña ni verificación de email.
+
+---
+
+## 🧪 Testing
+
+Se usa **Vitest** y **React Testing Library**. Los servicios externos (Firebase y los contextos que dependen de él) se mockean con `vi.mock`.
+
+| Archivo | Qué prueba |
+|---|---|
+| `cartReducer.test.ts` | Agregar, sumar cantidad, cambiar cantidad, quitar, vaciar, inmutabilidad, tope de stock, fusión de carritos y total |
+| `ProtectedRoute.test.tsx` | Estado de carga, redirección sin sesión, acceso con sesión y restricción por rol |
+| `ProductCard.test.tsx` | Botón con y sin stock, acción `ADD` al carrito y tope alcanzado |
+| `useDebounce.test.ts` | El valor se actualiza recién después de la espera (con relojes falsos) |
+| `orderStatus.test.ts` | Pasos del seguimiento y textos de los estados |
+
+```bash
+npm run test:run
+```
+
+---
+
+## 🤖 Bitácora de uso de IA
+
+Usé **Claude (Anthropic)** como herramienta de desarrollo para planificar la arquitectura, escribir código base, depurar errores, revisar decisiones técnicas y generar tests. La IA propuso; yo ejecuté, probé en el navegador y en el deploy, y corregí lo que no funcionaba. Cada entrada registra el pedido, qué respondió la IA y qué verifiqué o cambié yo.
+
+
+### 1. Depuración del error `auth/invalid-api-key` (local y en Vercel)
+
+- **Prompt:** compartí una captura de la consola con el error `Firebase: Error (auth/invalid-api-key)` y la pantalla en blanco. Más tarde, el mismo síntoma apareció en el deploy de Vercel.
+- **Respuesta de la IA:** identificó que Firebase arrancaba sin claves porque el `.env` estaba vacío. En local propuso completar el `.env` y reiniciar Vite. En Vercel explicó que el `.env` no viaja a GitHub, que hay que cargar las variables `VITE_` en el panel y **volver a desplegar**, porque esas variables se incorporan al compilar.
+- **Qué verifiqué:** confirmé la causa en la consola del navegador (F12), cargué las 4 variables en Vercel, hice *Redeploy* y comprobé que la página cargaba. Después agregué el dominio de Vercel a los dominios autorizados de Firebase para que funcionara el login con Google.
+- **Aprendizaje:** una variable de entorno nueva no afecta a un deploy ya hecho.
+
+### 2. Roles y reglas de seguridad de Firestore
+
+- **Prompt:** pedí diferenciar `customer` y `admin`, con un panel solo para administradores, y proteger los datos.
+- **Respuesta de la IA:** propuso guardar el rol en `users/{uid}`, leerlo en `AuthContext` y reglas de Firestore con una función `isAdmin()`. Explicó que ocultar el botón de Admin no alcanza, porque la seguridad real la dan las reglas del servidor.
+- **Qué verifiqué y corregí:**
+  - Probé con dos cuentas: el cliente no ve el link Admin y, al escribir `/admin`, vuelve al inicio.
+  - Al revisar las reglas vi que `users` no debía permitir que alguien se cambie el rol, y las dejé con `hasOnly(['name','phone','address'])`.
+  - Cuando no podía borrar órdenes, descubrí que faltaban tanto el botón como el permiso `delete` en las reglas.
+  - Al pasar el rol a `ProtectedRoute`, corregí los subrayados de TypeScript (`user` posiblemente nulo) usando `user?.uid`.
+- **Resultado:** rutas protegidas desde un único componente y reglas que impiden la escalada de privilegios.
+
+### 3. Subida de imágenes con AWS S3 y funciones serverless
+
+- **Prompt:** pedí subir imágenes de productos a S3 sin exponer la dirección de la imagen y conectar Vercel.
+- **Respuesta de la IA:** diseñó el flujo con bucket privado y URLs prefirmadas: la función `upload-url` verifica el token de Firebase y el rol admin, y el navegador sube directo a S3. Para mostrar, `image-url` devuelve links que vencen. Indicó también los permisos mínimos de IAM y la configuración de CORS.
+- **Qué verifiqué y corregí:**
+  - Creé un usuario de IAM nuevo con permisos limitados a `products/*`, en lugar de reutilizar el de otro proyecto.
+  - Resolví el aviso de TypeScript por `process` instalando `@types/node` y agregando un `api/tsconfig.json`.
+  - Cargué las variables solo en Vercel (sin prefijo `VITE_`) y probé la subida en el deploy.
+  - Le pedí a la IA que me aclarara el límite real de la privacidad: los links temporales siguen siendo visibles mientras están vigentes. Lo documenté en las limitaciones.
+- **Resultado:** fotos principales y adicionales almacenadas en S3, con acceso solo mediante links temporales.
+
+### 4. Tests, y revisión del stock
+
+- **Prompt:** pedí tests con Vitest y React Testing Library. Más tarde reporté un bug que encontré usando la app: "cada vez que toco agregar al carrito puedo agregar más de lo que hay en el stock".
+- **Respuesta de la IA:**
+  - Para testear, sugirió extraer el reducer a `cartReducer.ts` (lógica pura) y mockear los contextos con `vi.mock` para no depender de Firebase.
+  - Para el bug, propuso defensa en capas: la interfaz apaga los botones, el reducer impide pasar el tope y la transacción de Firestore revalida el stock real al comprar.
+- **Qué verifiqué:**
+  - Corrí `npm run test:run` y rompí el código a propósito (por ejemplo, cambiando la suma en el reducer) para comprobar que los tests fallan cuando deben.
+  - Agregué tests del tope de stock y verifiqué el comportamiento a mano: el botón pasa a "Máximo en el carrito".
+  - Detecté y anoté como limitación que las reglas permiten bajar el stock desde el cliente.
+- **Resultado:** lógica del carrito cubierta por tests y stock protegido en tres capas.
+
+### Errores de la IA que detecté y corregí
+
+- Un comentario `// ...` quedó fuera de las llaves en el JSX de `App.tsx` y se mostraba como texto en pantalla. Lo señalé y se movió dentro de las llaves.
+- En algunos pasos se dieron indicaciones incompletas (por ejemplo, un import sin su archivo asociado). Lo detecté al compilar y al ver los errores de TypeScript, y lo completé.
+- Al presionar varias veces "Cargar productos de ejemplo" se duplicaban los productos. Lo corregí haciendo que la carga verifique si la colección ya tiene datos.
+
+### Reflexión
+
+La IA aceleró la escritura del código y el diagnóstico de errores, pero no reemplaza probar. Lo más valioso fue pedirle que explique el porqué de cada decisión (reducers, reglas de Firestore, URLs prefirmadas) y verificarlo después en el navegador, en el deploy y con tests que fallan cuando el código se rompe. También aprendí a desconfiar de las respuestas que "parecen completas" y a revisar siempre los límites de seguridad.
+
+---
+
+## 📄 Licencia
+
+Proyecto educativo.
