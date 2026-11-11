@@ -11,17 +11,23 @@ export type CartAction =
 export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   switch (action.type) {
     case 'ADD': {
+      const max = action.item.stock ?? Infinity          // Sin dato de stock (carritos viejos), no hay tope
       const exists = state.find((i) => i.productId === action.item.productId)
-      if (exists) // Si ya estaba, sumamos 1 a la cantidad
+      if (exists) {
+        if (exists.quantity >= max) return state         // Ya está al máximo: no cambia nada
         return state.map((i) => (i.productId === exists.productId ? { ...i, quantity: i.quantity + 1 } : i))
-      return [...state, { ...action.item, quantity: 1 }] // Si no, lo agregamos
+      }
+      if (max <= 0) return state                         // Sin stock: ni siquiera entra al carrito
+      return [...state, { ...action.item, quantity: 1 }]
     }
     case 'REMOVE':
       return state.filter((i) => i.productId !== action.productId)
     case 'SET_QTY':
       return state
-        .map((i) => (i.productId === action.productId ? { ...i, quantity: action.quantity } : i))
-        .filter((i) => i.quantity > 0) // Si la cantidad llega a 0, se elimina
+        .map((i) => (i.productId === action.productId
+          ? { ...i, quantity: Math.min(action.quantity, i.stock ?? Infinity) } // Nunca más que el stock
+          : i))
+        .filter((i) => i.quantity > 0)
     case 'CLEAR':
       return []
   }

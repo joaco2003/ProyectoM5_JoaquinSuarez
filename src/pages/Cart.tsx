@@ -50,8 +50,9 @@ export default function Cart() {
           <div className="qty">
             <button className="icon-btn" onClick={() => dispatch({ type: 'SET_QTY', productId: i.productId, quantity: i.quantity - 1 })}>➖</button>
             <span>{i.quantity}</span>
-            <button className="icon-btn" onClick={() => dispatch({ type: 'SET_QTY', productId: i.productId, quantity: i.quantity + 1 })}>➕</button>
+            <button className="icon-btn"  disabled={i.quantity >= (i.stock ?? Infinity)} onClick={() => dispatch({ type: 'SET_QTY', productId: i.productId, quantity: i.quantity + 1 })}>➕</button>
             <button className="icon-btn" onClick={() => dispatch({ type: 'REMOVE', productId: i.productId })}>🗑️</button>
+            {i.stock !== undefined && i.quantity >= i.stock && <p className="stock-out small">Máximo disponible</p>}
           </div>
           <p className="bold">${(i.price * i.quantity).toLocaleString('es-AR')}</p>
         </div>

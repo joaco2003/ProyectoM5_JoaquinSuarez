@@ -6,7 +6,8 @@ export function toCartItem(p: Product): Omit<CartItem, 'quantity'> {
     name: p.name,
     price: p.price,
     imageUrl: p.imageUrl ?? '',
-    imageKey: p.imageKey ?? '',     // NUEVO: la foto de S3 también viaja al carrito
+    imageKey: p.imageKey ?? '',
     emoji: p.emoji ?? '🎾',
+    stock: p.stock ?? 0,          // NUEVO: el tope viaja con el ítem
   };
 }

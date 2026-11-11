@@ -9,7 +9,7 @@ import type { Product } from '../types';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { dispatch } = useCart();
+  const { items, dispatch } = useCart();
   const [product, setProduct] = useState<Product | null | undefined>(undefined); // undefined = cargando
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -20,6 +20,8 @@ export default function ProductDetail() {
   if (product === null) return <p>Producto no encontrado. <Link to="/products">Volver</Link></p>;
 
   const stock = product.stock ?? 0;
+  const inCart = items.find((i) => i.productId === product.id)?.quantity ?? 0; // Lo que ya tenés agregado
+const available = stock - inCart;                                           // Lo que todavía podés sumar
   const extras = product.extraImageKeys ?? [];                      // Fotos adicionales (lista vacía si no hay)
   const hasMain = Boolean(product.imageKey || product.imageUrl);    // ¿Tiene foto principal?
   const showMain = hasMain || extras.length === 0;                  // Si no hay ninguna foto, igual mostramos el recuadro con el emoji
@@ -56,20 +58,29 @@ export default function ProductDetail() {
             {stock > 0 ? `Stock: ${stock} disponibles` : 'Sin stock'}
           </p>
 
-          {stock > 0 && (
-            <>
-              <div className="qty-row">
-                <div className="qty-box">
-                  <button className="icon-btn" onClick={() => setQty(Math.max(1, qty - 1))}>➖</button>
-                  <span>{qty}</span>
-                  <button className="icon-btn" onClick={() => setQty(Math.min(stock, qty + 1))}>➕</button>
-                </div>
-                <button className="primary-btn" onClick={addToCart}>Agregar al carrito</button>
-                <button className="secondary-btn" onClick={buyNow}>Comprar ahora</button>
-              </div>
-              {added && <p className="added-msg">¡Agregado al carrito!</p>}
-            </>
-          )}
+          {available > 0 ? (
+  <>
+    <div className="qty-row">
+      <div className="qty-box">
+        <button className="icon-btn" onClick={() => setQty(Math.max(1, qty - 1))}>➖</button>
+        <span>{qty}</span>
+        {/* Math.min(available, ...) impide pasar de lo que todavía queda */}
+        <button className="icon-btn" disabled={qty >= available} onClick={() => setQty(Math.min(available, qty + 1))}>➕</button>
+      </div>
+      <button className="primary-btn" onClick={addToCart}>Agregar al carrito</button>
+      <button className="secondary-btn" onClick={buyNow}>Comprar ahora</button>
+    </div>
+    {added && <p className="added-msg">¡Agregado al carrito!</p>}
+    {inCart > 0 && <p className="muted small">Ya tenés {inCart} en el carrito</p>}
+  </>
+) : (
+  stock > 0 && (
+    <>
+      <p className="stock-out">Ya agregaste todo el stock disponible</p>
+      <button className="secondary-btn" onClick={() => navigate('/cart')}>Ir al carrito</button>
+    </>
+  )
+)}
 
           {/* Secciones desplegables. <details> se abre y se cierra solo al tocar el <summary> */}
           <div className="accordions">

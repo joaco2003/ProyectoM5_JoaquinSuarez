@@ -51,6 +51,23 @@ describe('cartReducer', () => {
     cartReducer(before, { type: 'ADD', item: pala })
     expect(before[0].quantity).toBe(1)                // El carrito original sigue igual
   })
+    it('ADD no pasa del stock disponible', () => {
+    const limitado = { ...pala, stock: 2 }
+    let state = cartReducer([], { type: 'ADD', item: limitado })
+    state = cartReducer(state, { type: 'ADD', item: limitado })
+    state = cartReducer(state, { type: 'ADD', item: limitado })   // El tercero ya no entra
+    expect(state[0].quantity).toBe(2)
+  })
+
+  it('ADD de un producto sin stock no entra al carrito', () => {
+    expect(cartReducer([], { type: 'ADD', item: { ...pala, stock: 0 } })).toEqual([])
+  })
+
+  it('SET_QTY recorta la cantidad al stock', () => {
+    const state: CartItem[] = [{ ...pala, quantity: 1, stock: 3 }]
+    const result = cartReducer(state, { type: 'SET_QTY', productId: 'p1', quantity: 10 })
+    expect(result[0].quantity).toBe(3)
+  })
 })
 
 describe('getTotal', () => {

@@ -264,7 +264,7 @@ background-color: #111827;
 /* ===== Subida de varias imágenes (Admin) ===== */
 
 .upload-item { display: flex; align-items: flex-start; gap: .25rem; }
-
+.icon-btn:disabled { opacity: .3; cursor: not-allowed; }   /* Botones ➕ apagados al llegar al tope */
 /* ===== Inicio ===== */
 .hero { text-align: center; padding: 3rem 1.5rem; }
 .hero-title { font-size: 2rem; font-weight: 800; }

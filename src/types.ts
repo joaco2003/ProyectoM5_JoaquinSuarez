@@ -20,6 +20,7 @@ export interface CartItem {
   imageUrl?: string;  // Foto chica para mostrar en el checkout
   emoji?: string;     // Emoji de respaldo si no hay foto
     imageKey?: string;
+      stock?: number;     // Stock disponible al momento de agregar (tope de la cantidad)
 }
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'; // Estados permitidos
 export interface Order {
