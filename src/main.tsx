@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-import { OrdersProvider } from './context/OrdersContext'; // NUEVO
+import { OrdersProvider } from './context/OrdersContext'; 
 import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <OrdersProvider>   {/* NUEVO: después de Auth, porque necesita saber quién está logueado */}
+          <OrdersProvider>   
             <CartProvider>
               <App />
             </CartProvider>
