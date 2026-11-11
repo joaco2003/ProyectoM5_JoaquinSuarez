@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, query, where, doc, updateDoc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { CartItem, Order, OrderStatus } from '../types';
 
@@ -42,4 +42,10 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
 // NUEVO: borra una orden
 export async function deleteOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, 'orders', id));
+}
+// Trae UNA orden por su ID (null si no existe)
+export async function getOrder(id: string): Promise<Order | null> {
+  const snap = await getDoc(doc(db, 'orders', id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...(snap.data() as Omit<Order, 'id'>) };
 }

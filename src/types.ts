@@ -31,3 +31,9 @@ export interface Order {
   createdAt: number; // Fecha en milisegundos
 }
 export type Role = 'customer' | 'admin'; // Los dos únicos roles posibles
+
+export interface Profile {      // Datos de contacto del usuario
+  name: string;
+  phone: string;
+  address: string;
+}

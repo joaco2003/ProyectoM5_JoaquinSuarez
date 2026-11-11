@@ -13,6 +13,9 @@ import { useAuth } from './context/AuthContext';
 import { useCart } from './context/CartContext';
 import { useTheme } from './context/ThemeContext';
 import Footer from './components/Footer';
+import OrderDetail from './pages/OrderDetail';
+import Profile from './pages/Profile';
+
 // Icono de persona
 const UserIcon = () => (
   <svg className="icon" viewBox="0 0 24 24">
@@ -92,6 +95,7 @@ export default function App() {
               {user && menuOpen && (
                 <div className="account-menu" onClick={() => setMenuOpen(false)}>
                   <p className="account-email">{user.email}</p>
+                  <Link className="account-link" to="/profile">Mi perfil</Link>
                   <Link className="account-link" to="/orders">Mis órdenes</Link>
                   {isAdmin && <Link className="account-link" to="/admin">Admin</Link>}
                   <button className="account-link" onClick={logout}>Salir</button>
@@ -141,6 +145,8 @@ export default function App() {
           {/* Rutas que exigen sesión: todo lo que está adentro pasa por el guardia */}
           <Route element={<ProtectedRoute />}>
             <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* Rutas que exigen sesión y rol admin */}
